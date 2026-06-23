@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#1F4E79">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Absences JA">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
+<title>Absences — Jean Aicard</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f0f4f8;min-height:100vh;padding-bottom:2rem}
+.topbar{background:#1F4E79;color:#fff;padding:env(safe-area-inset-top,14px) 16px 12px;padding-top:max(env(safe-area-inset-top),14px)}
+.topbar h1{font-size:17px;font-weight:600;letter-spacing:.2px}
+.topbar .sub{font-size:11px;opacity:.7;margin-top:2px}
+.week-nav{display:flex;align-items:center;background:#2E75B6;padding:8px 14px;color:#fff;gap:8px}
+.week-nav button{background:rgba(255,255,255,.18);border:none;color:#fff;width:36px;height:36px;border-radius:50%;cursor:pointer;font-size:20px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.week-nav button:active{background:rgba(255,255,255,.35)}
+.winfo{flex:1;text-align:center}
+.wlabel{font-size:13px;font-weight:600}
+.pbadge{display:inline-block;font-size:10px;background:rgba(255,255,255,.22);padding:2px 10px;border-radius:99px;margin-top:3px}
+.day-sel{display:flex;gap:6px;padding:10px 12px;background:#fff;border-bottom:1px solid #e2e8f0;overflow-x:auto;-webkit-overflow-scrolling:touch}
+.day-btn{flex:1;min-width:60px;padding:8px 4px;border:1.5px solid #e2e8f0;background:#f8fafc;border-radius:10px;cursor:pointer;text-align:center;color:#64748b;font-size:11px;font-family:inherit;transition:all .15s}
+.day-btn .dn{font-size:10px;display:block;color:#94a3b8;margin-bottom:1px}
+.day-btn.active{background:#1F4E79;border-color:#1F4E79;color:#fff}
+.day-btn.active .dn{color:rgba(255,255,255,.75)}
+.day-btn.has-abs{border-color:#2E75B6}
+.summary-bar{margin:12px 12px 0;background:#1F4E79;color:#fff;border-radius:12px;padding:12px 16px;display:flex;align-items:center;justify-content:space-between}
+.tot{font-size:28px;font-weight:700;line-height:1}
+.tlbl{font-size:11px;opacity:.8;margin-top:3px}
+.rc{text-align:right}
+.rv{font-size:20px;font-weight:600}
+.rl{font-size:10px;opacity:.8;margin-top:3px}
+.section-title{font-size:11px;font-weight:600;color:#64748b;text-transform:uppercase;letter-spacing:.5px;padding:14px 14px 6px}
+.cls-card{background:#fff;border:1px solid #e2e8f0;border-radius:12px;margin:0 12px 8px;overflow:hidden}
+.cls-header{display:flex;align-items:center;gap:10px;padding:11px 13px;cursor:pointer;user-select:none}
+.cls-name{font-size:13px;font-weight:600;color:#1e293b;min-width:52px}
+.abs-ctrl{display:flex;align-items:center;border:1.5px solid #e2e8f0;border-radius:9px;overflow:hidden}
+.abs-ctrl button{background:#f8fafc;border:none;width:34px;height:34px;cursor:pointer;font-size:18px;color:#475569;font-family:inherit;display:flex;align-items:center;justify-content:center}
+.abs-ctrl button:active{background:#e2e8f0}
+.abs-val{width:30px;text-align:center;font-size:15px;font-weight:600;color:#1e293b;background:#fff}
+.abs-val.nonzero{color:#1F4E79}
+.rtoggle-wrap{display:flex;align-items:center;gap:7px;margin-left:auto}
+.rlbl{font-size:10px;color:#94a3b8;text-align:right;line-height:1.4}
+.toggle{width:42px;height:24px;border-radius:12px;border:1.5px solid #e2e8f0;cursor:pointer;position:relative;background:#f1f5f9;transition:background .2s,border-color .2s;flex-shrink:0}
+.toggle.on{background:#1F4E79;border-color:#1F4E79}
+.toggle::after{content:'';position:absolute;width:18px;height:18px;border-radius:50%;background:#fff;top:2px;left:2px;transition:left .2s;box-shadow:0 1px 3px rgba(0,0,0,.2)}
+.toggle.on::after{left:18px}
+.chevron{font-size:16px;color:#cbd5e1;margin-left:4px;transition:transform .2s;flex-shrink:0}
+.chevron.open{transform:rotate(180deg)}
+.noms-panel{border-top:1px solid #f1f5f9;padding:10px 13px 12px;background:#fafcff}
+.noms-panel.hidden{display:none}
+.noms-list{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px;min-height:4px}
+.nom-tag{display:flex;align-items:center;gap:5px;background:#EBF3FB;border:1px solid #B5D4F4;border-radius:99px;padding:4px 8px 4px 11px;font-size:12px;color:#0C447C}
+.nom-tag button{background:none;border:none;cursor:pointer;color:#378ADD;font-size:16px;line-height:1;padding:0 2px;font-family:inherit}
+.nom-tag button:active{color:#E24B4A}
+.empty-noms{font-size:12px;color:#94a3b8;font-style:italic;padding:2px 0 6px}
+.nom-input-row{display:flex;gap:8px}
+.nom-input-row input{flex:1;height:38px;border-radius:9px;border:1.5px solid #e2e8f0;padding:0 12px;font-size:14px;font-family:inherit;background:#fff;color:#1e293b;outline:none}
+.nom-input-row input:focus{border-color:#2E75B6}
+.nom-input-row button{height:38px;padding:0 14px;border-radius:9px;border:1.5px solid #2E75B6;background:#2E75B6;color:#fff;cursor:pointer;font-size:13px;font-weight:600;font-family:inherit;white-space:nowrap}
+.nom-input-row button:active{background:#1F4E79}
+.export-btn{display:block;width:calc(100% - 24px);margin:14px 12px 0;padding:13px;border-radius:12px;background:#fff;border:1.5px solid #e2e8f0;color:#475569;font-size:14px;font-family:inherit;cursor:pointer;text-align:center}
+.export-btn:active{background:#f1f5f9}
+.save-indicator{text-align:center;font-size:11px;color:#94a3b8;margin-top:10px;padding-bottom:4px}
+.save-indicator.saved{color:#1D9E75}
+.cls-card.has-abs .cls-header{background:#f0f7ff}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <h1>Relevé des absences</h1>
+  <div class="sub">École Jean Aicard — La Garde (83130)</div>
+</div>
+<div class="week-nav">
+  <button id="prev-w" aria-label="Semaine précédente">&#8249;</button>
+  <div class="winfo">
+    <div class="wlabel" id="wlabel">—</div>
+    <span class="pbadge" id="pbadge">—</span>
+  </div>
+  <button id="next-w" aria-label="Semaine suivante">&#8250;</button>
+</div>
+<div class="day-sel" id="day-sel"></div>
+<div class="summary-bar">
+  <div>
+    <div class="tot" id="tot">0</div>
+    <div class="tlbl">absents aujourd'hui</div>
+  </div>
+  <div class="rc">
+    <div class="rv" id="rcnt">0 / 0</div>
+    <div class="rl">raison connue</div>
+  </div>
+</div>
+<div class="section-title">Classes</div>
+<div id="classes-wrap"></div>
+<button class="export-btn" id="export-btn">&#128196; Copier le résumé de la semaine</button>
+<div class="save-indicator" id="save-ind">Données sauvegardées automatiquement</div>
+
+<script>
+const CLASSES=["CP A","CP B","CE1 A","CE1 B","CE2 A","CE2 B","CE2 C","CM1 A","CM1 B","CM2 A","CM2 B","CM2 C","ULIS"];
+const JNAMES={1:"Lundi",2:"Mardi",4:"Jeudi",5:"Vendredi"};
+const vacances=[[new Date(2026,9,18),new Date(2026,10,1)],[new Date(2026,11,20),new Date(2027,0,3)],[new Date(2027,1,13),new Date(2027,1,28)],[new Date(2027,3,24),new Date(2027,4,9)]];
+const periods=[["P1",new Date(2026,8,2),new Date(2026,9,17)],["P2",new Date(2026,10,2),new Date(2026,11,19)],["P3",new Date(2027,0,4),new Date(2027,1,12)],["P4",new Date(2027,2,1),new Date(2027,3,23)],["P5",new Date(2027,4,10),new Date(2027,6,3)]];
+function isVac(d){return vacances.some(([s,e])=>d>=s&&d<=e);}
+function isSchool(d){const w=d.getDay();if(w===0||w===3||w===6)return false;return!isVac(d);}
+function getPeriod(d){for(const[n,s,e]of periods){if(d>=s&&d<=e)return n;}return "—";}
+function fmt(d){return d.toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit'});}
+function getMonday(d){const day=d.getDay()||7;const m=new Date(d);m.setDate(d.getDate()-day+1);return m;}
+
+const allWeeks=[];
+let cur=new Date(2026,8,2);const end=new Date(2027,6,3);
+while(cur<=end){
+  if(isSchool(cur)){
+    const mon=getMonday(cur);const key=mon.toISOString().slice(0,10);
+    if(!allWeeks.length||allWeeks[allWeeks.length-1].key!==key)allWeeks.push({key,monday:new Date(mon),days:[]});
+    allWeeks[allWeeks.length-1].days.push(new Date(cur));
+  }
+  cur.setDate(cur.getDate()+1);
+}
+
+const STORE_KEY='absences_jean_aicard_2026';
+let state={};
+try{const s=localStorage.getItem(STORE_KEY);if(s)state=JSON.parse(s);}catch(e){}
+
+function save(){
+  try{localStorage.setItem(STORE_KEY,JSON.stringify(state));showSaved();}catch(e){}
+}
+let saveTimer=null;
+function showSaved(){
+  clearTimeout(saveTimer);
+  const el=document.getElementById('save-ind');
+  el.textContent='✓ Sauvegardé';el.className='save-indicator saved';
+  saveTimer=setTimeout(()=>{el.textContent='Données sauvegardées automatiquement';el.className='save-indicator';},2000);
+}
+
+function k(w,d,c){return`${w}_${d}_${c}`;}
+function get(w,d,c){return state[k(w,d,c)]||{abs:0,raison:false,noms:[]};}
+function ensure(w,d,c){if(!state[k(w,d,c)])state[k(w,d,c)]={abs:0,raison:false,noms:[]};}
+
+const openPanels={};
+let cw=0,cd=0;
+
+function findCurrentWeek(){
+  const today=new Date();today.setHours(0,0,0,0);
+  for(let i=0;i<allWeeks.length;i++){
+    const days=allWeeks[i].days;
+    if(days.some(d=>{const dd=new Date(d);dd.setHours(0,0,0,0);return dd.getTime()===today.getTime()}))return i;
+    if(new Date(allWeeks[i].monday)<=today&&(i===allWeeks.length-1||new Date(allWeeks[i+1].monday)>today))return i;
+  }
+  return 0;
+}
+cw=findCurrentWeek();
+
+function renderWeekNav(){
+  const w=allWeeks[cw];
+  document.getElementById('wlabel').textContent=`Sem. ${cw+1} — ${fmt(w.days[0])} au ${fmt(w.days[w.days.length-1])}`;
+  document.getElementById('pbadge').textContent=getPeriod(w.monday);
+  document.getElementById('prev-w').style.opacity=cw===0?'0.4':'1';
+  document.getElementById('next-w').style.opacity=cw===allWeeks.length-1?'0.4':'1';
+}
+
+function renderDays(){
+  const w=allWeeks[cw];
+  const container=document.getElementById('day-sel');
+  container.innerHTML='';
+  if(cd>=w.days.length)cd=0;
+  w.days.forEach((d,i)=>{
+    const wd=d.getDay();
+    const hasAbs=CLASSES.some(c=>get(cw,i,c).abs>0);
+    const btn=document.createElement('button');
+    btn.className='day-btn'+(i===cd?' active':'')+(hasAbs&&i!==cd?' has-abs':'');
+    btn.innerHTML=`<span class="dn">${JNAMES[wd]||''}</span>${fmt(d)}`;
+    btn.onclick=()=>{cd=i;renderAll();};
+    container.appendChild(btn);
+  });
+}
+
+function renderSummary(){
+  let tot=0,ra=0,rt=0;
+  CLASSES.forEach(c=>{
+    const d=get(cw,cd,c);
+    tot+=d.abs;
+    if(d.abs>0){rt++;if(d.raison)ra++;}
+  });
+  document.getElementById('tot').textContent=tot;
+  document.getElementById('rcnt').textContent=`${ra} / ${rt}`;
+}
+
+function renderClasses(){
+  const wrap=document.getElementById('classes-wrap');
+  wrap.innerHTML='';
+  CLASSES.forEach(cls=>{
+    const d=get(cw,cd,cls);
+    const pk=`${cw}_${cd}_${cls}`;
+    const open=!!openPanels[pk];
+
+    const card=document.createElement('div');
+    card.className='cls-card'+(d.abs>0?' has-abs':'');
+
+    const hdr=document.createElement('div');
+    hdr.className='cls-header';
+    hdr.innerHTML=`
+      <span class="cls-name">${cls}</span>
+      <div class="abs-ctrl">
+        <button data-a="dec" data-c="${cls}">−</button>
+        <span class="abs-val${d.abs>0?' nonzero':''}" id="av_${cls.replace(/ /g,'_')}">${d.abs}</span>
+        <button data-a="inc" data-c="${cls}">+</button>
+      </div>
+      <div class="rtoggle-wrap">
+        <span class="rlbl">Raison<br>connue</span>
+        <div class="toggle${d.raison?' on':''}" data-c="${cls}" role="switch" aria-checked="${d.raison}" tabindex="0" aria-label="Raison connue ${cls}"></div>
+      </div>
+      <span class="chevron${open?' open':''}">&#8964;</span>`;
+    card.appendChild(hdr);
+
+    const panel=document.createElement('div');
+    panel.className='noms-panel'+(open?'':' hidden');
+
+    const list=document.createElement('div');
+    list.className='noms-list';
+    list.id=`nl_${cls.replace(/ /g,'_')}`;
+
+    function renderTags(){
+      list.innerHTML='';
+      const nd=get(cw,cd,cls);
+      if(!nd.noms||!nd.noms.length){
+        list.innerHTML=`<span class="empty-noms">Aucun nom saisi</span>`;
+      } else {
+        nd.noms.forEach((nom,i)=>{
+          const tag=document.createElement('span');
+          tag.className='nom-tag';
+          tag.innerHTML=`${nom}<button data-i="${i}" data-c="${cls}" aria-label="Supprimer ${nom}">×</button>`;
+          list.appendChild(tag);
+        });
+      }
+    }
+    renderTags();
+
+    const inputRow=document.createElement('div');
+    inputRow.className='nom-input-row';
+    const inp=document.createElement('input');
+    inp.type='text';inp.placeholder='Nom, Prénom';inp.autocomplete='off';inp.autocapitalize='words';
+    const addBtn=document.createElement('button');
+    addBtn.textContent='Ajouter';
+
+    function addNom(){
+      const v=inp.value.trim();if(!v)return;
+      ensure(cw,cd,cls);
+      state[k(cw,cd,cls)].noms.push(v);
+      const curAbs=state[k(cw,cd,cls)].abs;
+      if(state[k(cw,cd,cls)].noms.length>curAbs){
+        state[k(cw,cd,cls)].abs=state[k(cw,cd,cls)].noms.length;
+        const avEl=document.getElementById('av_'+cls.replace(/ /g,'_'));
+        if(avEl){avEl.textContent=state[k(cw,cd,cls)].abs;avEl.className='abs-val nonzero';}
+        card.className='cls-card has-abs';
+        renderSummary();renderDays();
+      }
+      inp.value='';renderTags();save();
+    }
+    addBtn.onclick=addNom;
+    inp.onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();addNom();}};
+    inputRow.appendChild(inp);inputRow.appendChild(addBtn);
+    panel.appendChild(list);panel.appendChild(inputRow);
+    card.appendChild(panel);
+
+    hdr.querySelectorAll('[data-a]').forEach(btn=>{
+      btn.onclick=e=>{
+        e.stopPropagation();
+        const cls2=btn.dataset.c;
+        ensure(cw,cd,cls2);
+        const cur2=state[k(cw,cd,cls2)].abs;
+        state[k(cw,cd,cls2)].abs=Math.max(0,btn.dataset.a==='inc'?cur2+1:cur2-1);
+        const avEl=document.getElementById('av_'+cls2.replace(/ /g,'_'));
+        if(avEl){
+          avEl.textContent=state[k(cw,cd,cls2)].abs;
+          avEl.className='abs-val'+(state[k(cw,cd,cls2)].abs>0?' nonzero':'');
+        }
+        card.className='cls-card'+(state[k(cw,cd,cls2)].abs>0?' has-abs':'');
+        renderSummary();renderDays();save();
+      };
+    });
+
+    const tog=hdr.querySelector('.toggle');
+    const toggleR=e=>{
+      e.stopPropagation();
+      ensure(cw,cd,cls);
+      const v=!state[k(cw,cd,cls)].raison;
+      state[k(cw,cd,cls)].raison=v;
+      tog.className='toggle'+(v?' on':'');
+      tog.setAttribute('aria-checked',v);
+      renderSummary();save();
+    };
+    tog.onclick=toggleR;
+    tog.onkeydown=e=>{if(e.key===' '||e.key==='Enter'){e.preventDefault();toggleR(e);}};
+
+    panel.addEventListener('click',e=>{
+      const delBtn=e.target.closest('[data-i]');
+      if(delBtn){
+        const i=parseInt(delBtn.dataset.i);
+        const cls2=delBtn.dataset.c;
+        ensure(cw,cd,cls2);
+        state[k(cw,cd,cls2)].noms.splice(i,1);
+        renderTags();save();
+      }
+    });
+
+    hdr.onclick=e=>{
+      if(e.target.closest('[data-a]')||e.target.closest('.toggle'))return;
+      openPanels[pk]=!openPanels[pk];
+      panel.classList.toggle('hidden',!openPanels[pk]);
+      hdr.querySelector('.chevron').classList.toggle('open',!!openPanels[pk]);
+    };
+
+    wrap.appendChild(card);
+  });
+}
+
+function renderAll(){renderWeekNav();renderDays();renderClasses();renderSummary();}
+
+document.getElementById('prev-w').onclick=()=>{if(cw>0){cw--;cd=0;renderAll();}};
+document.getElementById('next-w').onclick=()=>{if(cw<allWeeks.length-1){cw++;cd=0;renderAll();}};
+
+document.getElementById('export-btn').onclick=()=>{
+  const w=allWeeks[cw];
+  const lines=[`Semaine ${cw+1} — ${fmt(w.days[0])} au ${fmt(w.days[w.days.length-1])}`,''];
+  w.days.forEach((d,i)=>{
+    let tot=0;const details=[];
+    CLASSES.forEach(c=>{
+      const entry=get(cw,i,c);tot+=entry.abs;
+      if(entry.abs>0){
+        const noms=entry.noms&&entry.noms.length?entry.noms.join(', '):'noms non saisis';
+        details.push(`  ${c} : ${entry.abs} abs.${entry.raison?' (raison connue)':''} — ${noms}`);
+      }
+    });
+    lines.push(`${JNAMES[d.getDay()]} ${fmt(d)} — ${tot} absent(s)`);
+    details.forEach(l=>lines.push(l));
+    if(!details.length)lines.push('  Aucune absence');
+    lines.push('');
+  });
+  const txt=lines.join('\n');
+  if(navigator.clipboard){
+    navigator.clipboard.writeText(txt).then(()=>{
+      const btn=document.getElementById('export-btn');
+      btn.textContent='✓ Copié !';
+      setTimeout(()=>{btn.innerHTML='&#128196; Copier le résumé de la semaine';},2000);
+    });
+  }
+};
+
+if('serviceWorker' in navigator){
+  navigator.serviceWorker.register('sw.js').catch(()=>{});
+}
+
+renderAll();
+</script>
+</body>
+</html>
